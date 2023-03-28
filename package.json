@@ -1,0 +1,20 @@
+{
+  "name": "white-automation",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "test:c": "jest --coverage",
+    "test:u": "jest --updateSnapshot",
+    "test:v": "jest --verbose"
+  },
+  "author": "logic",
+  "license": "ISC",
+  "devDependencies": {
+    "auto-template": "github:white-base/auto-template",
+    "is-binary-path": "^2.1.0",
+    "jest": "^29.5.0",
+    "white-core": "github:white-base/core"
+  }
+}
