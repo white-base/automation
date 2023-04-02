@@ -5,7 +5,7 @@ const { MetaElement, PropertyCollection, MetaObject, Observer } = require('white
 const { DependResolver } = require('./depend-resolver');
 const { FileCollection, FolderCollection } = require('./original-path');
 const { InstallMap } = require('./source-batch');
-const { AutoTemplate } = require('auto-template');
+const { AutoTemplate } = require('logic-auto-template');
 const at = require('./auto-task');
 
 /**
