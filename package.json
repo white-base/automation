@@ -12,9 +12,11 @@
   "author": "logic",
   "license": "ISC",
   "devDependencies": {
-    "logic-template": "github:white-base/auto-template",
+    "jest": "^29.5.0"
+  },
+  "dependencies": {
     "is-binary-path": "^2.1.0",
-    "jest": "^29.5.0",
-    "white-core": "github:white-base/core"
+    "logic-auto-template": "github:white-base/auto-template",
+    "logic-core": "github:white-base/core"
   }
 }

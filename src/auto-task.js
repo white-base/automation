@@ -318,6 +318,26 @@ class AutoTask {
     /**
      * 앤트리 오토 조회 및 적재
      */
+    // _load() {        
+    //     if (this.isLog) console.log('_load()....');
+
+    //     // 현재 폴더의 auto.js 파일 로딩
+    //     const entryFile = path.join(this.#dir, 'auto.js');
+    //     // 다양한 조건에 예외조건을 수용해야함
+    //     delete require.cache[require.resolve(entryFile)]
+    //     const EntryAuto = require(entryFile);
+    //     // 타입 검사해야함
+    //     // this.entry = new EntryAuto();
+    //     this.entry = typeof EntryAuto === 'function' ? new EntryAuto() : new EntryAuto.Automation();
+
+    //     // 초기화 
+    //     this.entry.init();
+
+    //     this.batch._batchFile = this.entry._file;
+        
+    //     // 이벤트 발생
+    //     this._onLoad();
+    // }
     _load() {        
         if (this.isLog) console.log('_load()....');
 
@@ -335,6 +355,7 @@ class AutoTask {
         // 이벤트 발생
         this._onLoad();
     }
+
 
     /*_______________________________________*/
     // event call
