@@ -7,6 +7,9 @@ const { FileCollection, FolderCollection } = require('./original-path');
 const { InstallMap } = require('./source-batch');
 const { AutoTemplate } = require('logic-auto-template');
 const at = require('./auto-task');
+// const { AutoTask } = require('./auto-task');
+// const AutoTask = require('./auto-task');
+const AutoTask = require('./auto-task').AutoTask;
 
 /**
  * 오토메이션 클래스
@@ -116,7 +119,10 @@ class Automation {
     _owner              = null;
     _file               = [];
     _subTitle           = '';      // add 설명
-    _task               = at.AutoTask.getInstance();
+// _AutoTask = AutoTask
+    // _task               = at.AutoTask.getInstance();
+    // _task               = at.AutoTask._instance;
+    
     /*_______________________________________*/    
     // private
     #modName            = '';
@@ -186,7 +192,11 @@ class Automation {
         //     this.dir = dir;
         //     this.#isFinal = true;   // 최종 auto 로 설정
         // }    
-        // console.log('Automation load..');
+        // console.log('Automation load..'  + at);
+
+        // this._task               = at.AutoTask.getInstance();
+        this._task               = AutoTask.getInstance();
+
         if (dir) this.dir = dir;      // Automation 설정시 사용
     }
 

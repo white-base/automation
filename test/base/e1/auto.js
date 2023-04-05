@@ -10,7 +10,7 @@ class Auto extends Automation {
         
         let m1 = new M1();
         
-        this.mod.super('m1', m1, 'super 테스트');
+        this.mod.super('a1', m1, 'super 테스트');
     }
 }
 

@@ -1,8 +1,12 @@
 const path = require('path');
 const fs = require('fs');
 const mm = require('micromatch');
-const at = require('./auto-task');
 const { NonTextFile, TextFile, VirtualFolder, OriginalPath } = require('./original-path');
+const at = require('./auto-task');
+// const { AutoTask } = require('./auto-task');
+// const AutoTask = require('./auto-task');
+
+// console.log('ss');
 
 /**
  * 소스배치 클래스
@@ -517,7 +521,7 @@ class TargetSource {
                 if (entry === refSrc._auto) {
                     absolute = path.sep + refSrc.localPath;
                 } else {    // 하위의 경우
-                    if ( refSrc.dir.indexOf(entry.dir) < 0) { // 앤트리 하위 여부 검사
+                    if (this._batch.pathType !==2 && refSrc.dir.indexOf(entry.dir) < 0) { // 앤트리 하위 여부 검사
                         throw new Error(' 절대경로를 사용할려면 하위오토는 앤트리 오토의 하위에 있어야 합니다. fail...');
                     }
                     localDir = path.relative(entry.dir, refSrc.dir);
@@ -535,7 +539,7 @@ class TargetSource {
                     else absolute = path.sep + refSrc._target.subPath;              // location 기준 절대경로       
                 } else {                        // 엔트리 외(하위)의 경우
                     // 앤트리 하위 여부 검사
-                    if ( refSrc._target.dir.indexOf(entry.dir) < 0) {
+                    if (this._batch.pathType !==2 && refSrc._target.dir.indexOf(entry.dir) < 0) {
                         throw new Error(' 절대경로를 사용할려면 하위오토는 앤트리 오토의 하위에 있어야 합니다. fail...');
                     }
                     localDir = path.relative(entry.dir, refSrc._target.dir);
@@ -724,7 +728,8 @@ class InstallMap {
     /*_______________________________________*/        
     // protected
     _auto = null;
-    _task = at.AutoTask.getInstance();
+    // _task = at.AutoTask.getInstance();
+    // _task = AutoTask.getInstance();
     _parent = null;
     _child = [];
     _setup = [];
@@ -750,6 +755,8 @@ class InstallMap {
 
     constructor(auto, json) {
         this._auto = auto;
+        this._task = at.AutoTask.getInstance();
+        // this._task = AutoTask.getInstance();
         if (json) this.#load(json);
     }
 

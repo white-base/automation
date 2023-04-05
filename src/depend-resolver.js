@@ -2,6 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const mm = require('micromatch');
 const at = require('./auto-task');
+// const { AutoTask } = require('./auto-task');
+const AutoTask = require('./auto-task');
 
 class DependResolver {
     

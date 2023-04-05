@@ -8,9 +8,9 @@ class Auto extends Automation {
     constructor() {
         super(__dirname);
         
-        let m1_1 = new M1();
+        let m1_1 = new M1_1();
         
-        this.mod.super('m1_1', m1_1);
+        this.mod.super('a1_1', m1_1);
     }
 }
 

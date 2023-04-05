@@ -7,6 +7,8 @@ const { Observer } = require('white-core');
 /**
  * 오토태스크 클래스
  */
+// let instance = {};
+
 class AutoTask {
     /*_______________________________________*/        
     // public
@@ -21,13 +23,18 @@ class AutoTask {
     /*_______________________________________*/        
     // protected
     static _instance = null;
+    // static _instance = instance;
     
+    // static ii = instance;
+
     /*_______________________________________*/        
     // private
     #isLog = false;
     #dir = null;
     #event              = new Observer(this, this);
     
+    // ins_ref = instance;
+
     /*_______________________________________*/        
     // property
     get isLog() { return this.#isLog };
@@ -64,8 +71,15 @@ class AutoTask {
         if (typeof dir !== 'string' || dir.length === 0) {
             throw new Error(' start [dir] request fail...');
         }
+
+
+// console.log(this === AutoTask);
+        
+// AutoTask._ins = 10;
+// this._ins = 10;
         this._instance = new this();
         this._instance.#dir = dir;
+        // instance = this._instance;
         this._instance._load();
         return this._instance;
     }
@@ -103,7 +117,7 @@ class AutoTask {
         this.cursor = 'DIST';
         
         // 로딩
-        this._load();
+        // this._load();
 
         // 대상 오토 조회
         let list = this.entry._getAllList(true);
@@ -118,6 +132,7 @@ class AutoTask {
             list[i].resolver.resolve();
             this.batch.addCollection(list[i].src, this.entry.LOC.DIS, true);
         }
+// console.log('do_dist');
 
         // 저장
         this.batch.pathType = 2;     // 기본절대경로
@@ -132,7 +147,7 @@ class AutoTask {
         this.cursor = 'DEPEND';
 
         // 로딩
-        this._load();
+        // this._load();
 
         /**
          * TODO:: 대상 오토의 1차 의존성의 구조까지 로딩해야함
@@ -152,16 +167,18 @@ class AutoTask {
 
         // 의존성 로딩 및 설정
         for (let i = 0; i < all.length; i++) {
-            all[i].resolver.read();
-            all[i].resolver.resolve();
+            const auto = all[i];
+            auto.resolver.read();
+            auto.resolver.resolve();
+            
+            if (auto === this.entry) continue;  // 엔트리는 제외
             
             // 기타 모듈
-            if (dep.indexOf(all[i]) < 0) {
-                this.batch.addCollection(all[i].src, this.entry.LOC.DIS);
-            
+            if (dep.indexOf(auto) < 0) {
+                this.batch.addCollection(auto.src, this.entry.LOC.DIS);
             // 의존성 모듈
             } else {
-                this.batch.addCollection(all[i].src, this.entry.LOC.DEP);
+                this.batch.addCollection(auto.src, this.entry.LOC.DEP);
             }
         }
         // 저장
@@ -170,6 +187,48 @@ class AutoTask {
         // this.batch.pathType = 2;         // 기본절대경로
         this.batch.save();            
     }
+    // do_depend() { 
+    //     this.cursor = 'DEPEND';
+
+    //     // 로딩
+    //     // this._load();
+
+    //     /**
+    //      * TODO:: 대상 오토의 1차 의존성의 구조까지 로딩해야함
+    //      * 확인필요 !!
+    //      */
+    //     let all = this.entry._getAllList();    // 엔트리는 제외
+    //     let dep = this.entry._getDependList();
+
+    //     /**
+    //      * - 구조만 불러와도 배치는 할 수 있다.
+    //      */
+
+    //     // 이부분은 정의 역활을 한다.
+    //     for (let i = 0; i < all.length; i++) {
+    //         all[i].readSource(true, false);
+    //     }
+
+    //     // 의존성 로딩 및 설정
+    //     for (let i = 0; i < all.length; i++) {
+    //         all[i].resolver.read();
+    //         all[i].resolver.resolve();
+            
+    //         // 기타 모듈
+    //         if (dep.indexOf(all[i]) < 0) {
+    //             this.batch.addCollection(all[i].src, this.entry.LOC.DIS);
+            
+    //         // 의존성 모듈
+    //         } else {
+    //             this.batch.addCollection(all[i].src, this.entry.LOC.DEP);
+    //         }
+    //     }
+    //     // 저장
+    //     // this.batch.isRoot = true;        // 절대경로시 entry 폴더 기준
+    //     this.batch.pathType = 1;      // 기본상대경로
+    //     // this.batch.pathType = 2;         // 기본절대경로
+    //     this.batch.save();            
+    // }
 
     /**
      * install 태스크 실행
@@ -177,7 +236,7 @@ class AutoTask {
     do_install() {
         this.cursor = 'INSTALL';
         // 로딩
-        this._load();
+        // this._load();
 
         // 대상 오토 조회
         let list = this.entry._getAllList(true);
@@ -208,7 +267,7 @@ class AutoTask {
     do_relation() {
         this.cursor = 'RELATION';
         // 로딩
-        this._load();
+        // this._load();
 
         // 대상 오토 조회
         let list = this.entry._getAllList(true);
@@ -232,7 +291,7 @@ class AutoTask {
     do_cover(auto = this.entry) {
         this.cursor = 'COVER';
         // 로딩
-        this._load();
+        // this._load();
 
         auto.readSource(true, true);
         auto.writeParentObject();
@@ -245,7 +304,7 @@ class AutoTask {
     do_map(opt) {
         this.cursor = 'MAP';
         // 로딩
-        this._load();
+        // this._load();
 
         // 대상 오토 조회
         let list = this.entry._getAllList(true);
@@ -264,7 +323,7 @@ class AutoTask {
     do_list(opt) {
         this.cursor = 'LIST';
         // 로딩
-        this._load();
+        // this._load();
 
         // 대상 오토 조회
         let list = this.entry._getAllList(true);
@@ -279,16 +338,16 @@ class AutoTask {
     /**
      * 리셋 태스크 실행 (파일 및 폴더 삭제, 객체 초기화)
      */
-    do_reset() {
+    do_clear() {
         
         let dir, entry, delPath;
 
         this.cursor = 'RESET';
         // 로딩
-        this._load();
+        // this._load();
         // 배치 파일 삭제
         this.batch.clear();
-        this.#event.unsubscribeAll();
+        this.#event.unsubscribe();
         
         // 디렉토리 삭제        
         entry = this.entry;
@@ -342,8 +401,10 @@ class AutoTask {
         if (this.isLog) console.log('_load()....');
 
         // 현재 폴더의 auto.js 파일 로딩
-        let entryFile  = this.#dir + '/auto.js'
+        // let entryFile  = this.#dir + '/auto.js'
+        let entryFile  = this.#dir + '/auto.js';
         // 다양한 조건에 예외조건을 수용해야함
+        // delete require.cache[require.resolve(entryFile)]
         const EntryAuto = require(entryFile);
         // 타입 검사해야함
         this.entry = new EntryAuto();
@@ -376,3 +437,4 @@ class AutoTask {
 }
 
 exports.AutoTask = AutoTask;
+// module.exports = AutoTask;
