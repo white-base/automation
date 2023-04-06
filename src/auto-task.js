@@ -183,8 +183,8 @@ class AutoTask {
         }
         // 저장
         // this.batch.isRoot = true;        // 절대경로시 entry 폴더 기준
-        this.batch.pathType = 1;      // 기본상대경로
-        // this.batch.pathType = 2;         // 기본절대경로
+        // this.batch.pathType = 1;         // 기본 절대경로
+        this.batch.pathType = 2;         // 기본 상대경로
         this.batch.save();            
     }
     // do_depend() { 

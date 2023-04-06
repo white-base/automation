@@ -1,15 +1,14 @@
-const fs = require('fs');
-const path = require('path');
-const { MetaElement, PropertyCollection, MetaObject, Observer } = require('white-core');
-// const { MetaElement, PropertyCollection, MetaObject, Observer } = require('entitybind');
-const { DependResolver } = require('./depend-resolver');
-const { FileCollection, FolderCollection } = require('./original-path');
-const { InstallMap } = require('./source-batch');
-const { AutoTemplate } = require('logic-auto-template');
-const at = require('./auto-task');
+const { FileCollection, FolderCollection }          = require('./original-path');
+const { MetaElement, PropertyCollection, Observer } = require('white-core');
+const fs                    = require('fs');
+const path                  = require('path');
+const { DependResolver }    = require('./depend-resolver');
+const { InstallMap }        = require('./install-map');
+const { AutoTemplate }      = require('logic-auto-template');
+const at                    = require('./auto-task');
 // const { AutoTask } = require('./auto-task');
-// const AutoTask = require('./auto-task');
-const AutoTask = require('./auto-task').AutoTask;
+// const AutoTask = require('./auto-task'); 
+const AutoTask              = require('./auto-task').AutoTask;
 
 /**
  * 오토메이션 클래스
@@ -130,6 +129,16 @@ class Automation {
     #alias              = '';
     #modTyped           = 0;
     #event              = new Observer(this, this);
+    #pathType = {
+        type: 0,
+        rootDir: null,  // '없을시 entry.dir'
+        subDir: '',
+        dep: {},
+        dist: {},
+        install: {},
+        publish: {},  // 사용유무?
+    };
+
     /*_______________________________________*/        
     // property
     get modName() {
@@ -182,6 +191,65 @@ class Automation {
     }
     set onSaved(fun) {
         this._task.onSaved = fun;
+    }
+
+    get pathType() {    // (0:자동, 1:절대, 2:상대)
+        return {
+            // 기본경로
+            type: this.#pathType.type,
+            rootDir: this.#pathType.rootDir,
+            // 폴더별 경로
+            dep: {
+                type: this.#pathType.dep?.type,
+                rootDir: this.#pathType.dep?.rootDir,
+                subDir: this.#pathType.dep?.subDir,
+            },
+            dist: {
+                type: this.#pathType.dist?.type,
+                rootDir: this.#pathType.dist?.rootDir,
+                subDir: this.#pathType.dist?.subDir,
+            },
+            install: {
+                type: this.#pathType.install?.type,
+                rootDir: this.#pathType.install?.rootDir,
+                subDir: this.#pathType.install?.subDir,
+            },
+            publish: {
+                type: this.#pathType.publish?.type,
+                rootDir: this.#pathType.publish?.rootDir,
+                subDir: this.#pathType.publish?.subDir,
+            }
+        };
+    }
+    set pathType(val) {
+        if (typeof val === 'number') return this.#pathType.type = val;
+        if (typeof val.type === 'number') this.#pathType.type = val;
+        if (typeof val.rootDir === 'string') this.#pathType.rootDir = val.rootDir;
+        if (typeof val.subDir === 'string') this.#pathType.subDir = val.subDir;
+        
+        if (typeof val.dep === 'object') {
+            if (typeof val.dep.type === 'number') this.#pathType.dep.type = val;
+            if (typeof val.dep.rootDir === 'string') this.#pathType.dep.rootDir = val.dep.rootDir;
+            if (typeof val.dep.subDir === 'string') this.#pathType.dep.subDir = val.dep.subDir;
+        } else if (typeof val.dep === 'number') this.#pathType.dep.type = val.dep;
+        
+        if (typeof val.dist === 'object') {
+            if (typeof val.dist.type === 'number') this.#pathType.dist.type = val;
+            if (typeof val.dist.rootDir === 'string') this.#pathType.dist.rootDir = val.dist.rootDir;
+            if (typeof val.dist.subDir === 'string') this.#pathType.dist.subDir = val.dist.subDir;
+        } else if (typeof val.dist === 'number') this.#pathType.dist.type = val.dist;
+        
+        if (typeof val.install === 'object') {
+            if (typeof val.dinstallep.type === 'number') this.#pathType.install.type = val;
+            if (typeof val.install.rootDir === 'string') this.#pathType.install.rootDir = val.install.rootDir;
+            if (typeof val.install.subDir === 'string') this.#pathType.install.subDir = val.install.subDir;
+        } else if (typeof val.install === 'number') this.#pathType.install.type = val.install;
+        
+        if (typeof val.publish === 'object') {
+            if (typeof val.publish.type === 'number') this.#pathType.publish.type = val;
+            if (typeof val.publish.rootDir === 'string') this.#pathType.publish.rootDir = val.publish.rootDir;
+            if (typeof val.publish.subDir === 'string') this.#pathType.publish.subDir = val.publish.subDir;
+        } else if (typeof val.publish === 'number') this.#pathType.publish.type = val.publish;
     }
 
     /**
@@ -703,6 +771,13 @@ class Automation {
         this._super.push(alias);
         // 의존성 등록
         this._onwer.dep.add(alias, auto.src);
+
+        // 하위 가져오기
+        const arrSuper = auto._getSuperList(false);    // 자신 제외
+        for (let i = 0; i < arrSuper.length; i++) {
+            const sup = arrSuper[i];
+            this._onwer.dep.add(sup.alias, sup.src);
+        }
     }
 
     /**

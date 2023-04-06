@@ -1,12 +1,7 @@
-const path = require('path');
-const fs = require('fs');
-const mm = require('micromatch');
-const { NonTextFile, TextFile, VirtualFolder, OriginalPath } = require('./original-path');
-const at = require('./auto-task');
-// const { AutoTask } = require('./auto-task');
-// const AutoTask = require('./auto-task');
-
-// console.log('ss');
+const path              = require('path');
+const fs                = require('fs');
+const { TextFile }      = require('./original-path');
+const { TargetSource }  = require('./target-source');
 
 /**
  * 소스배치 클래스
@@ -14,7 +9,7 @@ const at = require('./auto-task');
 class SourceBatch {
     /*_______________________________________*/        
     // public
-    pathType = 0;       // (0:자동, 1:절대, 2:상대)
+    // pathType = 0;       // (0:자동, 1:절대, 2:상대)
     dupType = 1;        // (0:하위참조, 1:중복제거, 2:중복허용)
     isAlias = false;    // 설치시 별칭 포함 여부
     isRoot = true;
@@ -30,12 +25,86 @@ class SourceBatch {
     /*_______________________________________*/        
     // private
     _list = [];
+    #pathType = {
+        type: 0,
+        rootDir: null,  // '없을시 entry.dir'
+        subDir: '',
+        dep: { type: 1 },
+        dist: { type: 1 },
+        install: {
+            subDir: 'install'
+        },
+        publish: {},  // 사용유무?
+    };
 
-    constructor() {
+    /*_______________________________________*/        
+    // property
+    get pathType() {    // (0:자동, 1:절대, 2:상대)
+        const entry = this._task.entry;
+        return {
+            // 기본경로
+            type: entry.pathType.type || this.#pathType.type,
+            rootDir: entry.pathType.rootDir || this.#pathType.rootDir || entry.dir,
+            // 폴더별 경로
+            dep: {
+                type: entry.pathType.dep?.type || this.#pathType.dep?.type || this.#pathType.dep,
+                rootDir: entry.pathType.dep?.rootDir || this.#pathType.dep?.rootDir,
+                subDir: entry.pathType.dep?.subDir || this.#pathType.dep?.subDir,
+            },
+            dist: {
+                type: entry.pathType.dist?.type || this.#pathType.dist?.type || this.#pathType.dep,
+                rootDir: entry.pathType.dist?.rootDir || this.#pathType.dist?.rootDir,
+                subDir: entry.pathType.dist?.subDir || this.#pathType.dist?.subDir,
+            },
+            install: {
+                type: entry.pathType.install?.type || this.#pathType.install?.type || this.#pathType.install,
+                rootDir: entry.pathType.install?.rootDir || this.#pathType.install?.rootDir,
+                subDir: entry.pathType.install?.subDir || this.#pathType.install?.subDir,
+            },
+            publish: {
+                type: entry.pathType.publish?.type || this.#pathType.publish?.type || this.#pathType.publish,
+                rootDir: entry.pathType.publish?.rootDir || this.#pathType.publish?.rootDir,
+                subDir: entry.pathType.publish?.subDir || this.#pathType.publish?.subDir,
+            }
+        };
+    }
+    set pathType(val) {
+        if (typeof val === 'number') return this.#pathType.type = val;
+        if (typeof val.type === 'number') this.#pathType.type = val;
+        if (typeof val.rootDir === 'string') this.#pathType.rootDir = val.rootDir;
+        if (typeof val.subDir === 'string') this.#pathType.subDir = val.subDir;
+        
+        if (typeof val.dep === 'object') {
+            if (typeof val.dep.type === 'number') this.#pathType.dep.type = val;
+            if (typeof val.dep.rootDir === 'string') this.#pathType.dep.rootDir = val.dep.rootDir;
+            if (typeof val.dep.subDir === 'string') this.#pathType.dep.subDir = val.dep.subDir;
+        } else if (typeof val.dep === 'number') this.#pathType.dep.type = val.dep;
+        
+        if (typeof val.dist === 'object') {
+            if (typeof val.dist.type === 'number') this.#pathType.dist.type = val;
+            if (typeof val.dist.rootDir === 'string') this.#pathType.dist.rootDir = val.dist.rootDir;
+            if (typeof val.dist.subDir === 'string') this.#pathType.dist.subDir = val.dist.subDir;
+        } else if (typeof val.dist === 'number') this.#pathType.dist.type = val.dist;
+        
+        if (typeof val.install === 'object') {
+            if (typeof val.dinstallep.type === 'number') this.#pathType.install.type = val;
+            if (typeof val.install.rootDir === 'string') this.#pathType.install.rootDir = val.install.rootDir;
+            if (typeof val.install.subDir === 'string') this.#pathType.install.subDir = val.install.subDir;
+        } else if (typeof val.install === 'number') this.#pathType.install.type = val.install;
+        
+        if (typeof val.publish === 'object') {
+            if (typeof val.publish.type === 'number') this.#pathType.publish.type = val;
+            if (typeof val.publish.rootDir === 'string') this.#pathType.publish.rootDir = val.publish.rootDir;
+            if (typeof val.publish.subDir === 'string') this.#pathType.publish.subDir = val.publish.subDir;
+        } else if (typeof val.publish === 'number') this.#pathType.publish.type = val.publish;
     }
 
     /*_______________________________________*/        
     // public method
+
+    constructor() {
+    }
+
 
     /**
      * TODO:: 제거 검토
@@ -212,6 +281,21 @@ class SourceBatch {
         }
         console.warn('[실패 newFileName()] ' + fullPath );
         return obj.name;    // 원래 이름 리턴
+    }
+
+    getPathInfo(location) {
+        let type, dir;
+        let rootDir, subDir;
+
+        rootDir = this.pathType[location].rootDir || this.pathType.rootDir;
+        subDir = this.pathType[location].subDir || this.pathType.subDir;
+        
+        type = this.pathType[location].type || this.pathType.type;
+        dir = path.join(rootDir, subDir);
+        return {
+            type: type,
+            dir: dir
+        };
     }
 
     /*_______________________________________*/        
@@ -391,644 +475,4 @@ class SourceBatch {
     }
 }
 
-/**
- * 대상소스 클래스
- */
-class TargetSource {
-        
-    /*_______________________________________*/
-    // public
-    isSave      = true;     // 저장유무, 활성화 상태
-    isExcept    = false;    // save 시점에 제외 여부
-    isMerge     = false;    // 병합 여부
-    referType   = 0;        // 참조하는 타입
-    refedType   = 0;        // 참조되어지는 타입
-    type        = 0;        // 소스타입
-    data        = null;
-    
-    /*_______________________________________*/
-    // protected
-    _original   = null;
-    _owner      = null;
-    _owned      = [];
-    _batch      = SourceBatch.getInstance();
-
-    /*_______________________________________*/
-    // private
-    #dir        = null;
-    #location   = null;
-    #fullPath   = null;
-
-    /*_______________________________________*/
-    // property
-    get fullPath() {
-        // return this.#fullPath;
-        return this._owner === null ? this.#fullPath : this._owner.fullPath;
-    }
-    get dir() {
-        // return this.#dir;
-        return this._owner === null ? this.#dir : this._owner.dir;
-    }
-    set dir(val) {
-        // this.#dir = val;
-        if (this._owner === null) this.#dir = val;
-        else this._owner.dir = val;
-    }
-    get location() {
-        // return this.#location;
-        return this._owner === null ? this.#location : this._owner.location;
-    }
-    get name() {
-        return path.basename(this.fullPath);
-    }
-    get subDir() {
-        return path.dirname(this.subPath);
-    }
-    get subPath() {
-        return path.relative(this.dir + path.sep + this.location, this.fullPath);
-    }
-    set subPath(val) {
-        // this.#fullPath = this.dir + path.sep + this.location + path.sep + val;
-        if (this._owner === null) this.#fullPath = this.#dir + path.sep + this.#location + path.sep + val;
-        else this._owner.subPath = val;
-    }
-    get localDir() {
-        return path.dirname(this.localPath);
-    }
-    get localPath() {
-        return path.relative(this.dir, this.fullPath);
-    }
-    set owner(val) {
-        this._owner = val;      // 소유자
-        val._owned.push(this);  // 사용된곳 설정
-    }
-    get owner() {
-        return this._owner;
-    }
-
-    /**
-     * 
-     * @param {*} location 
-     * @param {*} ori?  선택사항 
-     */
-    constructor(location, ori) {
-        
-        let entry = this._batch._task.entry;
-        let auto  = null;
-
-        this.#location = location;
-        
-        if (ori instanceof OriginalPath) {
-            this._original = ori;    
-            auto = ori._auto;
-            this.#setType(ori);
-            this.#initPath();
-            if (location === entry.LOC.INS) auto.install.add(this);
-        }
-    }
-
-    /*_______________________________________*/        
-    // public method
-
-    /**
-     * 소스 내용(data) 설정
-     * @param {*} isRoot 절대경로시 location 경로 포함 여부 (install 시점)
-     */
-    setData(isRoot = true) {
-        
-        let ori, data, arrObj = [], list, change, refSrc, localDir;
-        let dir, entry;
-        let type, absolute, relative;
-
-        ori = this._original;
-        data = ori.data;
-        arrObj = []; // 초기화
-        entry = this._batch._task.entry;
-
-        
-        for (let ii = 0; ii < ori._dep.length; ii++) {
-
-            // _dep 객체에 pos 가 존재할 경우만 처리 !!
-            if (typeof ori._dep[ii].pos !== 'object') continue;
-
-            refSrc = ori._dep[ii].ref;
-            // 1) 타겟소스가 없을 경우
-            if (refSrc._target === null || refSrc._target.fullPath === null) {
-                
-                dir = path.dirname(this.fullPath);  
-                relative = path.relative(dir, refSrc.fullPath); // 상대경로 (오토기준)
-
-                if (entry === refSrc._auto) {
-                    absolute = path.sep + refSrc.localPath;
-                } else {    // 하위의 경우
-                    if (this._batch.pathType !==2 && refSrc.dir.indexOf(entry.dir) < 0) { // 앤트리 하위 여부 검사
-                        throw new Error(' 절대경로를 사용할려면 하위오토는 앤트리 오토의 하위에 있어야 합니다. fail...');
-                    }
-                    localDir = path.relative(entry.dir, refSrc.dir);
-                    absolute = path.sep + localDir + path.sep + refSrc.localPath;
-                }
-            
-            // 2) 타겟소스가 있을 경우
-            } else {
-                
-                dir = path.dirname(this.fullPath);
-                relative = path.relative(dir, refSrc._target.fullPath);       
-               
-                if (entry === refSrc._auto) {   // 엔트리의 경우
-                    if (isRoot) absolute = path.sep + refSrc._target.localPath;     // root 기준 절대경로
-                    else absolute = path.sep + refSrc._target.subPath;              // location 기준 절대경로       
-                } else {                        // 엔트리 외(하위)의 경우
-                    // 앤트리 하위 여부 검사
-                    if (this._batch.pathType !==2 && refSrc._target.dir.indexOf(entry.dir) < 0) {
-                        throw new Error(' 절대경로를 사용할려면 하위오토는 앤트리 오토의 하위에 있어야 합니다. fail...');
-                    }
-                    localDir = path.relative(entry.dir, refSrc._target.dir);
-                    if (localDir.length > 0) {
-                        absolute = path.sep + localDir + path.sep + refSrc._target.localPath;    
-                    } else {    // 'install', 'depend' 의 경우
-                        if (isRoot) absolute = path.sep + refSrc._target.localPath;
-                        else absolute = path.sep + refSrc._target.subPath;
-                    }
-                }             
-            }
-
-            for (let iii = 0; iii < ori._dep[ii].pos.length; iii++) {
-                list = ori._dep[ii].pos[iii];
-                
-                // 경로 설정
-                if (this._batch.pathType === 0 ) {
-                    // type = this.pathType === 0 ? list.type : this.pathType;
-                    if (this.referType === 0) {
-                        if (ori._dep[ii].ref._target.refedType === 0) {
-                            // pos 에서 파싱된 타입 설정
-                            type = list.type;
-                        } else {
-                            // 참조된 대상을 타입 설정
-                            type = ori._dep[ii].ref._target.refedType;
-                        }
-                    } else {
-                        // 대상 파일의 참조 타입 설정
-                        type = this.referType;
-                    }
-                } else {
-                    // 전체 경로 타입 설정
-                    type = this._batch.pathType;    
-                }
-                
-                if (type === 1) change = absolute;
-                else change = relative; // 기본상대경로
-                // else if (type === 2) change = relative;
-
-                arrObj.push({
-                    idx: list.idx,
-                    txt: list.key,
-                    rep: change,
-                });
-            }
-        }
-        // 파일내용 저장
-        this.#replaceData(data, arrObj);
-        return this.data;
-    }
-
-    /**
-     * 타겟소스 복제본 리턴
-     * @returns {this}
-     */
-    clone() {
-        
-        let obj = new TargetSource(this.location, this._original);
-        
-        obj.isSave      = this.isSave;
-        obj.isExcept    = this.isExcept;
-        obj.referType   = this.referType;
-        obj.refedType   = this.refedType;
-        obj.data        = this.data;
-        obj._original   = this._original;
-        obj._owner      = this._owner;
-        obj._owned      = this._owned.map( (val) => {return val } );
-        obj._owned      = this._owned;
-        obj._batch      = this._batch;
-        obj.subPath     = this.subPath;
-
-        return obj;
-    }
-
-    /*_______________________________________*/        
-    // private method
-
-    /**
-     * fullPath, dir 속성을 설정한다.
-     */
-     #initPath() {
-
-        let auto, src, useAuto, entry, alias, fullPath;
-        let location;
-        // const AutoTask = require('./auto-task');
-        entry = this._batch._task.entry;
-        
-
-        src = this._original;
-        auto = src._auto;
-        location = this.location;
-
-        if (location == entry.LOC.DIS) {
-            if (entry === src._auto) {
-                fullPath = auto.dir + path.sep + entry.LOC.DIS + path.sep + src.subPath;
-                
-            } else {    // 하위 오토의 경우
-                useAuto = auto._owner;
-                alias = useAuto.modName +'-'+ auto.alias;
-                fullPath = auto.dir + path.sep + entry.LOC.DIS + path.sep + alias + path.sep + src.subPath;
-            }
-            this.#dir = auto.dir;
-            this.#fullPath = fullPath;
-        
-        } else if (location == entry.LOC.DEP) {
-            alias = auto.alias;
-            fullPath = entry.dir + path.sep + entry.LOC.DEP + path.sep + alias + path.sep + src.subPath;
-            this.#dir = entry.dir;
-            this.#fullPath = fullPath;
-        
-        } else if (location == entry.LOC.INS) {
-            alias = auto.alias ? auto.modName + path.sep + auto.alias : auto.modName;
-            fullPath = entry.dir + path.sep + entry.LOC.INS + path.sep + alias + path.sep + src.subPath;
-            this.#dir = entry.dir;
-            this.#fullPath = fullPath;          
-        }
-    }    
-
-    /**
-     * 타입 설정
-     * @param {OriginalPath} ori 
-     * @returns {*}
-     */
-    #setType(ori) {
-        
-        let type = 0;
-        
-        if (ori instanceof VirtualFolder) this.type = 10;
-        if (ori instanceof NonTextFile) this.type = 20;
-        if (ori instanceof TextFile) this.type = 30;
-        
-        return type;
-    } 
-
-    /**
-     * 파일내용(data) 을 배열에 맞게 교체한다.
-     * @param {*} data 
-     * @param {*} arrObj 
-     */
-    #replaceData(data, arrObj) {
-        // replace
-        var obj;
-        var base_idx = 0, idx = 0;
-        var ori_data = data;
-        var ori_prev = '', ori_next = '';
-
-        // 배열 정렬
-        arrObj.sort(function (a,b) {
-            if (a.idx > b.idx) return 1;
-            if (a.idx === b.idx) return 0;
-            if (a.idx < b.idx) return -1;
-        });
-
-        for(var i = 0; i < arrObj.length; i++) {
-            obj = arrObj[i];
-            // rep 문자열검사
-            // txt 문자열 1 이상 
-            // idx > 
-            if (typeof obj.idx !== 'number' || typeof obj.txt !== 'string') {
-                console.warn('객체아님');
-                continue;
-            }
-            idx = obj.idx + base_idx;                                   // 시작 인텍스
-            if (ori_data.substr(idx, obj.txt.length) === obj.txt) {     // 검사
-                ori_prev = ori_data.slice(0, idx);                      // 앞 문자열
-                ori_next = ori_data.slice(idx + obj.txt.length);        // 뒤 문자열
-                ori_data = ori_prev + obj.rep + ori_next;
-                base_idx = base_idx + obj.rep.length - obj.txt.length;
-            } else {
-                console.warn('실패 '+ obj);
-            }
-        }
-        this.data = ori_data;
-    }
-}
-
-/**
- * 인스톨맵 클래스
- */
-class InstallMap {
-    
-    /*_______________________________________*/        
-    // public
-    isOverlap = false;
-
-    /*_______________________________________*/        
-    // protected
-    _auto = null;
-    // _task = at.AutoTask.getInstance();
-    // _task = AutoTask.getInstance();
-    _parent = null;
-    _child = [];
-    _setup = [];
-    _merge = [];
-    _rename = [];
-    _except = [];
-    _list = [];
-
-    /*_______________________________________*/      
-    // property  
-    get targets() {
-        
-        let arr = [];
-
-        for (let i = 0; i < this._child.length; i++) {
-            arr = arr.concat(this._child[i].targets);
-        }
-        for (let i = 0; i < this._list.length; i++) {
-            if (this._list[i].isSave === true) arr.push(this._list[i]);
-        }
-        return arr;
-    }    
-
-    constructor(auto, json) {
-        this._auto = auto;
-        this._task = at.AutoTask.getInstance();
-        // this._task = AutoTask.getInstance();
-        if (json) this.#load(json);
-    }
-
-    /*_______________________________________*/        
-    // public method
-
-    // 객체 얻기
-    getObject() {
-
-        var obj = {};
-        
-        for (var prop in this) {
-            if (['_setup', '_merge', '_except', '_global', '_rename', 'isOverlap'].indexOf(prop) > -1) {
-                obj[prop.replace('_', '')] = this[prop];            
-            }
-        }
-        return obj; 
-    }
-
-    /**
-     * 타겟소스 추가
-     * @param {TargetSource} target 
-     */
-    add(target) {
-        this._list.push(target);
-    }
-    
-    /**
-     * 인스톨맵 초기화 : _parent, _child 설정
-     */
-    init() {
-
-        const auto = this._auto;
-
-        if (auto._owner && auto._owner.install instanceof InstallMap) {
-            this._parent = auto._owner.install;     // 부모 InstallMap 연결
-            auto._owner.install._child.push(this);  // 자식 InstallMap 등록
-        }
-    }
-
-    /**
-     * 인트롤맵 처리 : 세팅 >> 이름변경 >> 병합 >> 제외
-     */
-    execute() {
-        
-        if (this._setup.length > 0) this.#execSetup();
-        if (this._rename.length > 0) this.#execRename();
-        if (this._merge.length > 0) this.#execMerge();
-        if (this._except.length > 0) this.#execExcept();
-    }
-
-    /*_______________________________________*/        
-    // private method
-
-    /**
-     * json 객체를 통해 객체 가져오기 (생성시)
-     * @param {JSON} json 
-     */
-    #load(json) {
-
-        let obj;
-
-        // setup obj
-        if (json.setup && Array.isArray(json.setup)) {
-            for (let i = 0; i < json.setup.length; i++) {
-                if (typeof json.setup[i] === 'object' && typeof json.setup[i].glob === 'string') {
-                    this._setup.push(json.setup[i]);
-                }
-            }
-        }
-        // merge obj
-        if (json.merge && Array.isArray(json.merge)) {
-            for (let i = 0; i < json.merge.length; i++) {
-                if (typeof json.merge[i] === 'object' && Array.isArray(json.merge[i].paths) && typeof json.merge[i].path === 'string') {
-                    this._merge.push(json.merge[i]);
-                }
-            }
-        }
-        // rename obj
-        if (json.rename && Array.isArray(json.rename)) {
-            for (let i = 0; i < json.rename.length; i++) {
-                if (typeof json.rename[i] === 'object' && typeof json.rename[i].glob === 'string' && (typeof json.rename[i].path === 'string' || typeof json.rename[i].dir === 'string')) {
-                    this._rename.push(json.rename[i]);
-                }
-            }
-        }
-        // except obj
-        if (json.except && Array.isArray(json.except)) {
-            for (let i = 0; i < json.except.length; i++) {
-                if (typeof json.except[i] === 'string') this._except.push(json.except[i]);
-            }
-        }
-    }
-
-    /**
-     * setup 실행
-     */
-    #execSetup() {
-
-        let obj, tars = [], arr = [];
-
-        for (let i = 0; i < this._setup.length; i++) {
-            
-            obj = this._setup[i];
-            
-            if (typeof obj.glob === 'string' && obj.glob.length > 0) {
-                arr = mm.match(this.targets.map((obj) => { return obj.subPath }), obj.glob);
-            }
-            if (arr.length > 0) {
-                tars = this.targets.filter((obj) => { return arr.indexOf(obj.subPath) > -1 })
-                
-                if (obj.isExcept && typeof obj.isExcept === 'boolean') {
-                    tars.map( (o) => { o.isExcept =  obj.isExcept; });
-                }
-
-                if (obj.referType && typeof obj.referType === 'number') {
-                    tars.map( (o) => { o.referType =  obj.referType; });
-                }
-
-                if (obj.refedType && typeof obj.refedType === 'number') {
-                    tars.map( (o) => { o.refedType =  obj.refedType; });
-                }
-            }
-        }
-    }
-
-    /**
-     * 이름변경 실행 
-     *  - 단일 파일명 변경
-     *  - 복수 경로 변경 (폴더)
-     */
-    #execRename() {
-        
-        let arr = [], obj, tars = [];
-        let entry = this._task.entry;
-        const batch = this._task.batch;
-        let fullPath, subPath;
-
-        for (let i = 0; i < this._rename.length; i++) {
-            obj = this._rename[i];
-            // 동시에 존재시 경고 후 처리 무시
-            if (typeof obj.path === 'string' && typeof obj.dir === 'string') {
-                console.warn('install.rename 객체에 path, dir 동시에 존재합니다. 하나만 사용하세요.');
-                continue;
-            }
-            
-            if (typeof obj.glob === 'string' && obj.glob.length > 0 && (obj.path || obj.dir)) {
-                arr = mm.match(this.targets.map((o) => { return o.subPath }), obj.glob);
-                // arr = mm.match( this.targetPaths, obj.glob);
-            }
-            
-            if (arr.length > 0) {
-                
-                // tars = this._getTarget(arr);
-                tars = this.targets.filter((o) => { return arr.indexOf(o.subPath) > -1 })
-                
-                // glob, path 처리
-                if (typeof obj.path === 'string' && obj.path.length > 0) {
-                    if (arr.length !== 1) {
-                        console.warn('install.rename 객체에 path 는 glob 하나마 매칭되어야 합니다.' + arr);
-                        continue;                    
-                    }
-                    // static 검사
-                    if (tars[0]._original.isStatic === true) {
-                        console.warn('static 파일은 이름은 변경할 수 없습니다.' + tars[0]._original.fullPath);
-                        continue;                    
-                    }
-                    subPath = obj.path;
-                    fullPath = tars[0].dir + path.sep + tars[0].location + path.sep + subPath;
-                    // 중복검사
-                    if (!batch.validPath(fullPath)) {
-                        subPath = path.dirname(subPath) + path.sep + batch.newFileName(fullPath);
-                        console.warn('[중복파일 이름재정의] ' + fullPath + ' >> ' + subPath)
-                    }
-                    tars[0].subPath = subPath;
-
-                // glob, dir 처리
-                } else if (typeof obj.dir === 'string' && obj.dir.length > 0) {
-
-                    for (let i = 0; i < tars.length; i++) {
-                        // static 검사
-                        if (tars[i]._original.isStatic === true) {
-                            console.warn('static 파일은 이름은 변경할 수 없습니다.' + tars[i]._original.fullPath);
-                            continue;                    
-                        }
-                        if (tars[i].type === 10) {      // VirtualFolder
-                            tars[i].subPath = obj.dir;
-                        } else if (tars[i].type === 20 ||  tars[i].type === 30) {   // TextFile & NonTextFile
-                            
-                            subPath = obj.dir + path.sep + tars[i].name;
-                            fullPath = tars[i].dir + path.sep + tars[i].location + path.sep + subPath;
-                            // 중복검사
-                            if (!batch.validPath(fullPath)) {
-                                subPath = path.dirname(subPath) + path.sep + batch.newFileName(fullPath);
-                                console.warn('[중복파일 이름재정의] ' + fullPath + ' >> ' + subPath)
-                            }
-                            tars[i].subPath = subPath;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * 파일 머지는 특수한 경우이다. 타겟소스의 타입이 텍스트의 경우만 유효하다.
-     */
-    #execMerge() {
-
-        let obj, arr = [], tars = [], newTar;
-        const entry = this._task.entry;
-        const batch = this._task.batch;
-
-        for (let i = 0; i < this._merge.length; i++) {
-            
-            obj = this._merge[i];
-
-            // 유효성 검사
-            if (typeof Array.isArray(obj.paths) && obj.paths.length > 0 && typeof obj.path === 'string' && obj.path.length > 0) {
-                obj.paths.forEach(v => {
-                    if (typeof v === 'string' && v.length > 0) arr.push(v);
-                });
-            }
-            if (arr.length > 0) {
-
-                arr.forEach(v => {
-                    let find = this.targets.find(vv => { return vv.subPath === v });
-                    if (find) tars.push(find);
-                });
-
-                if (tars.length > 0) {
-                    newTar = new TargetSource(entry.LOC.INS, null);
-                    newTar.dir = entry.dir;
-                    newTar.type = 30;
-                    newTar.subPath = obj.path;
-                    newTar.data  = '';
-                    newTar.isMerge = true;
-
-                    tars.forEach(v => {
-                        if (v.type === 30) {
-                            newTar.data += v._original.data + '\n'; // TODO:: 삭제해야함 isMerge = true
-                            v.owner = newTar;
-                            v.isSave = false;    
-                        }
-                    });
-                    batch.add(newTar);
-                }                
-            }
-        }
-    }
-
-    /**
-     * install 시 제외 파일 설정
-     */
-    #execExcept() {
-
-        let str, tars = [], arr = [];
-
-        for (let i = 0; i < this._except.length; i++) {
-            str = this._except[i];
-            if (typeof str === 'string' && str.length  > 0) {
-                arr = mm.match(this.targets.map((obj) => { return obj.subPath }), str);
-
-                if (arr.length > 0) {
-                    tars = this.targets.filter((obj) => { return arr.indexOf(obj.subPath) > -1 })
-                    tars.map( (o) => { o.isExcept = true; });
-                }
-            }
-        }
-    }
-}
-
 exports.SourceBatch = SourceBatch;
-exports.TargetSource = TargetSource;
-exports.InstallMap = InstallMap;
