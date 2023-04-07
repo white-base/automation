@@ -26,14 +26,11 @@ class SourceBatch {
     // private
     _list = [];
     #pathType = {
-        type: 0,
-        rootDir: null,  // '없을시 entry.dir'
-        subDir: '',
-        dep: { type: 1 },
-        dist: { type: 1 },
-        install: {
-            subDir: 'install'
-        },
+        type: 0,    // 0: 자동, 1: 절대, 2: 상대
+        root: 1,    // 0=최상위(절대경로), 1=엔트리, 2=로컬
+        dep: { type: 2 },
+        dist: { type: 2 },
+        install: { root: 2 },
         publish: {},  // 사용유무?
     };
 
@@ -44,58 +41,49 @@ class SourceBatch {
         return {
             // 기본경로
             type: entry.pathType.type || this.#pathType.type,
-            rootDir: entry.pathType.rootDir || this.#pathType.rootDir || entry.dir,
+            root: entry.pathType.root || this.#pathType.root || entry.dir,
             // 폴더별 경로
             dep: {
-                type: entry.pathType.dep?.type || this.#pathType.dep?.type || this.#pathType.dep,
-                rootDir: entry.pathType.dep?.rootDir || this.#pathType.dep?.rootDir,
-                subDir: entry.pathType.dep?.subDir || this.#pathType.dep?.subDir,
+                type: entry.pathType.dep?.type || this.#pathType.dep?.type,
+                root: entry.pathType.dep?.root || this.#pathType.dep?.root,
             },
             dist: {
-                type: entry.pathType.dist?.type || this.#pathType.dist?.type || this.#pathType.dep,
-                rootDir: entry.pathType.dist?.rootDir || this.#pathType.dist?.rootDir,
-                subDir: entry.pathType.dist?.subDir || this.#pathType.dist?.subDir,
+                type: entry.pathType.dist?.type || this.#pathType.dist?.type,
+                root: entry.pathType.dist?.root || this.#pathType.dist?.root,
             },
             install: {
-                type: entry.pathType.install?.type || this.#pathType.install?.type || this.#pathType.install,
-                rootDir: entry.pathType.install?.rootDir || this.#pathType.install?.rootDir,
-                subDir: entry.pathType.install?.subDir || this.#pathType.install?.subDir,
+                type: entry.pathType.install?.type || this.#pathType.install?.type,
+                root: entry.pathType.install?.root || this.#pathType.install?.root,
             },
             publish: {
-                type: entry.pathType.publish?.type || this.#pathType.publish?.type || this.#pathType.publish,
-                rootDir: entry.pathType.publish?.rootDir || this.#pathType.publish?.rootDir,
-                subDir: entry.pathType.publish?.subDir || this.#pathType.publish?.subDir,
+                type: entry.pathType.publish?.type || this.#pathType.publish?.type,
+                root: entry.pathType.publish?.root || this.#pathType.publish?.root,
             }
         };
     }
     set pathType(val) {
         if (typeof val === 'number') return this.#pathType.type = val;
         if (typeof val.type === 'number') this.#pathType.type = val;
-        if (typeof val.rootDir === 'string') this.#pathType.rootDir = val.rootDir;
-        if (typeof val.subDir === 'string') this.#pathType.subDir = val.subDir;
+        if (typeof val.root === 'string') this.#pathType.root = val.root;
         
         if (typeof val.dep === 'object') {
             if (typeof val.dep.type === 'number') this.#pathType.dep.type = val;
-            if (typeof val.dep.rootDir === 'string') this.#pathType.dep.rootDir = val.dep.rootDir;
-            if (typeof val.dep.subDir === 'string') this.#pathType.dep.subDir = val.dep.subDir;
+            if (typeof val.dep.root === 'string') this.#pathType.dep.root = val.dep.root;
         } else if (typeof val.dep === 'number') this.#pathType.dep.type = val.dep;
         
         if (typeof val.dist === 'object') {
             if (typeof val.dist.type === 'number') this.#pathType.dist.type = val;
-            if (typeof val.dist.rootDir === 'string') this.#pathType.dist.rootDir = val.dist.rootDir;
-            if (typeof val.dist.subDir === 'string') this.#pathType.dist.subDir = val.dist.subDir;
+            if (typeof val.dist.root === 'string') this.#pathType.dist.root = val.dist.root;
         } else if (typeof val.dist === 'number') this.#pathType.dist.type = val.dist;
         
         if (typeof val.install === 'object') {
             if (typeof val.dinstallep.type === 'number') this.#pathType.install.type = val;
-            if (typeof val.install.rootDir === 'string') this.#pathType.install.rootDir = val.install.rootDir;
-            if (typeof val.install.subDir === 'string') this.#pathType.install.subDir = val.install.subDir;
+            if (typeof val.install.root === 'string') this.#pathType.install.root = val.install.root;
         } else if (typeof val.install === 'number') this.#pathType.install.type = val.install;
         
         if (typeof val.publish === 'object') {
             if (typeof val.publish.type === 'number') this.#pathType.publish.type = val;
-            if (typeof val.publish.rootDir === 'string') this.#pathType.publish.rootDir = val.publish.rootDir;
-            if (typeof val.publish.subDir === 'string') this.#pathType.publish.subDir = val.publish.subDir;
+            if (typeof val.publish.root === 'string') this.#pathType.publish.root = val.publish.root;
         } else if (typeof val.publish === 'number') this.#pathType.publish.type = val.publish;
     }
 
@@ -147,11 +135,9 @@ class SourceBatch {
      * 전처리와 후처리 나누어야 함
      */
     save() {
-
         let autos;
 
         function getMergeData(tar, isRoot) {
-            
             let data = '';
             // 자식 순환 조회
             for (let i = 0; i < tar._owned.length; i++) {
@@ -163,22 +149,18 @@ class SourceBatch {
 
         // 이벤트 발생
         this._task._onSave();
-
         // install map 처리
         autos = this._task.entry._getAllList(true);
         
         if (this._task.cursor === 'INSTALL') {
             // 중복제거 처리
             this.#deduplication(this.dupType);
-            
             // 단일오토 별칭 경로 제거
             if (this.isAlias === false) this.#removeAlias();
-
             // 맨 하위부터 처리한다.
             for (let i = 0; i < autos.length; i++) {
                 // 초기화 : parent, child
                 autos[i].install.init();
-                
                 // 인스톨 설정 처리
                 // autos[i].install.execute();
             }
@@ -186,11 +168,9 @@ class SourceBatch {
             for (let i = 0; i < autos.length; i++) {
                 // 초기화 : parent, child
                 // autos[i].install.init();
-                
                 // 인스톨 설정 처리
                 autos[i].install.execute();
             }
-
         }
 
         for (let i = 0; i < this._list.length; i++) {
@@ -203,10 +183,8 @@ class SourceBatch {
                 this._list[i].data = getMergeData(this._list[i], this.isRoot);
             }
         }
-
         // 타겟 저장
         this.#saveFile();
-
         // 이벤트 발생
         this._task._onSaved();
     }
@@ -215,7 +193,6 @@ class SourceBatch {
      * 배치파일저장소 파일 및 배치생성파일 삭제
      */
     clear() {
-
         const batchfile = this._task.entry.dir +path.sep+ '__SaveFile.json';
         let fullPath;
 
@@ -236,7 +213,6 @@ class SourceBatch {
      * @returns {array}
      */
     getBatchList() {
-        
         let rArr = [];
 
         for (let i = 0; i < this._list.length; i++) {
@@ -269,7 +245,6 @@ class SourceBatch {
      * @returns {*}
      */
     newFileName(fullPath) {
-        
         let obj, filename;
         let delimiter = '_'; 
 
@@ -284,16 +259,16 @@ class SourceBatch {
     }
 
     getPathInfo(location) {
-        let type, dir;
-        let rootDir, subDir;
+        const entry = this._task.entry;
+        let type, dir, root = '';
 
-        rootDir = this.pathType[location].rootDir || this.pathType.rootDir;
-        subDir = this.pathType[location].subDir || this.pathType.subDir;
-        
+        root = this.pathType[location].root || this.pathType.root;
         type = this.pathType[location].type || this.pathType.type;
-        dir = path.join(rootDir, subDir);
+        if (root === 1) dir = entry.dir;
+        else if (root === 2) dir = path.join(entry.dir, location);
         return {
             type: type,
+            root: root,
             dir: dir
         };
     }
@@ -305,7 +280,6 @@ class SourceBatch {
      * 배치파일 저장
      */
      #saveFile() {
-
         let isExists, dirname, fullPath, data, orignal, type, target;
         const _this = this;
         // TODO:: try 로 예외 처리함
@@ -378,7 +352,6 @@ class SourceBatch {
      */
      #deduplication(depType) {
         // TODO:: isStatic 처리는 어디서??
-        
         const all = this._task.entry._getAllList(true);
         let list = [];
         let dupAuto = [];
@@ -441,7 +414,6 @@ class SourceBatch {
      * 경로 및 파일 중복 제거시, 모듈명 + 별칭 >> 모듈명으로 변경
      */
     #removeAlias() {
-        
         const all = this._task.entry._getAllList(false); // entry 는 별칭이 없으므로
         let dupAuto = [], singleAuto = [];
         let sigleTar = [];
@@ -470,8 +442,7 @@ class SourceBatch {
                 }
             });
         });
-
-        console.log(1)
+        // console.log(1)
     }
 }
 

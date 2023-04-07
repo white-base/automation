@@ -131,7 +131,7 @@ class Automation {
     #event              = new Observer(this, this);
     #pathType = {
         type: 0,
-        rootDir: null,  // '없을시 entry.dir'
+        root: null,  // '없을시 entry.dir'
         subDir: '',
         dep: {},
         dist: {},
@@ -197,58 +197,49 @@ class Automation {
         return {
             // 기본경로
             type: this.#pathType.type,
-            rootDir: this.#pathType.rootDir,
+            root: this.#pathType.root,
             // 폴더별 경로
             dep: {
                 type: this.#pathType.dep?.type,
-                rootDir: this.#pathType.dep?.rootDir,
-                subDir: this.#pathType.dep?.subDir,
+                root: this.#pathType.dep?.root,
             },
             dist: {
                 type: this.#pathType.dist?.type,
-                rootDir: this.#pathType.dist?.rootDir,
-                subDir: this.#pathType.dist?.subDir,
+                root: this.#pathType.dist?.root,
             },
             install: {
                 type: this.#pathType.install?.type,
-                rootDir: this.#pathType.install?.rootDir,
-                subDir: this.#pathType.install?.subDir,
+                root: this.#pathType.install?.root,
             },
             publish: {
                 type: this.#pathType.publish?.type,
-                rootDir: this.#pathType.publish?.rootDir,
-                subDir: this.#pathType.publish?.subDir,
+                root: this.#pathType.publish?.root,
             }
         };
     }
     set pathType(val) {
         if (typeof val === 'number') return this.#pathType.type = val;
         if (typeof val.type === 'number') this.#pathType.type = val;
-        if (typeof val.rootDir === 'string') this.#pathType.rootDir = val.rootDir;
-        if (typeof val.subDir === 'string') this.#pathType.subDir = val.subDir;
+        if (typeof val.root === 'string') this.#pathType.root = val.root;
         
         if (typeof val.dep === 'object') {
             if (typeof val.dep.type === 'number') this.#pathType.dep.type = val;
-            if (typeof val.dep.rootDir === 'string') this.#pathType.dep.rootDir = val.dep.rootDir;
-            if (typeof val.dep.subDir === 'string') this.#pathType.dep.subDir = val.dep.subDir;
+            if (typeof val.dep.root === 'string') this.#pathType.dep.root = val.dep.root;
         } else if (typeof val.dep === 'number') this.#pathType.dep.type = val.dep;
         
         if (typeof val.dist === 'object') {
             if (typeof val.dist.type === 'number') this.#pathType.dist.type = val;
-            if (typeof val.dist.rootDir === 'string') this.#pathType.dist.rootDir = val.dist.rootDir;
-            if (typeof val.dist.subDir === 'string') this.#pathType.dist.subDir = val.dist.subDir;
+            if (typeof val.dist.root === 'string') this.#pathType.dist.root = val.dist.root;
         } else if (typeof val.dist === 'number') this.#pathType.dist.type = val.dist;
         
         if (typeof val.install === 'object') {
             if (typeof val.dinstallep.type === 'number') this.#pathType.install.type = val;
-            if (typeof val.install.rootDir === 'string') this.#pathType.install.rootDir = val.install.rootDir;
-            if (typeof val.install.subDir === 'string') this.#pathType.install.subDir = val.install.subDir;
+            if (typeof val.install.root === 'string') this.#pathType.install.root = val.install.root;
         } else if (typeof val.install === 'number') this.#pathType.install.type = val.install;
         
         if (typeof val.publish === 'object') {
             if (typeof val.publish.type === 'number') this.#pathType.publish.type = val;
-            if (typeof val.publish.rootDir === 'string') this.#pathType.publish.rootDir = val.publish.rootDir;
-            if (typeof val.publish.subDir === 'string') this.#pathType.publish.subDir = val.publish.subDir;
+            if (typeof val.publish.root === 'string') this.#pathType.publish.root = val.publish.root;
         } else if (typeof val.publish === 'number') this.#pathType.publish.type = val.publish;
     }
 
@@ -276,7 +267,6 @@ class Automation {
      * @returns {*}
      */
     static getInstance() {
-        
         let instance = this._instance;
 
         if (!instance) {
@@ -350,13 +340,9 @@ class Automation {
      */
     writeParentObject() {
         // console.log('보모 객체 및 파일 덮어쓰기');
-
         let data, dirname;
-
         function copySource(collection, dir) {
-            
             let  fullPath, savePath;
-            
             for (let i = 0; i < collection.count; i++) {
                 fullPath = collection[i].fullPath;
                 savePath = dir + path.sep + collection[i].localPath;
@@ -394,11 +380,15 @@ class Automation {
      * @param {*} opt 옵션 0: -all, 1: "기본", 2: -detail, 3: -depend
      */
     writeObjectMap(opt = 1) {
-        
         let _this = this;
-
-        // modType = 0:entry, 1:mod, 2:sub, 3: super
-        // isSubCall
+        /**
+         * 오토 모듈 객체 생성
+         * @param {*} auto 
+         * @param {*} option 
+         * @param {*} modType  modType = 0:entry, 1:mod, 2:sub, 3: super
+         * @param {*} isSubCall 
+         * @returns 
+         */
         function createModObject(auto, option, modType = 0, isSubCall = true) {
         
             let obj = {}, child;
@@ -446,8 +436,10 @@ class Automation {
             }
             return obj;
         }
-
-        // 
+        /**
+         * 파일 저장
+         * @param {*} option 
+         */
         function saveFile(option) {
             
             let wriObj = {}, data, saveName;            
@@ -476,19 +468,13 @@ class Automation {
      * 객체(오토모듈) 목록 쓰기
      * @param {*} opt 옵션 0: -all, 1: "기본", 2: -detail,  3: -history
      */
-     writeObjectList(opt = 1) {
-
+    writeObjectList(opt = 1) {
         let _this = this, list;
-
         function createModObject(auto, option, modType = 0) {
-        
             let obj = {}, child;
             let arrDepend = [];
-
             function fileInfoObject(file) {
-                
                 let fileObj = {}, histry = [];
-                
                 // fileObj.name = file.localPath;
                 if (file.isStatic === true) fileObj.static = true;
                 if (file.comment.length > 0) fileObj.comment = file.comment;
@@ -498,7 +484,6 @@ class Automation {
                 if (file._auto._owner !== null) {   // auto 이면
 
                 }
-
                 return fileObj;
             }
 
@@ -529,16 +514,13 @@ class Automation {
             }
             return obj;
         }
-
         function saveFile(option) {
-            
             let wriList = [], data, saveName;            
 
             list = _this._getAllList(true);
             for (let i = list.length - 1; i > -1; i--) {
                 wriList.push(createModObject(list[i], option));
             }
-    
             saveName = path.basename(_this.FILE.LIST, '.json');
             if (option === 2) saveName += '_Detail';
             if (option === 3) saveName += '_History';
@@ -575,7 +557,6 @@ class Automation {
      * @returns {arrary}
      */
     _getDependList(isSelf) {
-        
         let list = [], prop, auto;
         
         // sub 가져오기
@@ -598,7 +579,6 @@ class Automation {
      * @returns {arrary}
      */
     _getSuperList(isSelf = null) {
-
         let list = [], prop, auto;
 
         for (let i = 0; i < this.mod.count; i++) {
@@ -619,7 +599,6 @@ class Automation {
      * @returns {arrary}
      */
     _getAllList(isSelf = null) {
-
         let list = [], auto;
                
         for (let i = 0; i < this.mod.count; i++) {
@@ -656,7 +635,6 @@ class Automation {
      * @param {string} dir auto 의 경로
      */
     #loadDir(dir) {
-        
         let _package, _install, _resolver, _prop;
 
         // 필수 파일 검사
@@ -711,7 +689,6 @@ class Automation {
      * @returns {*}
      */
     getObject(p_context) {
-
         let obj     = {};
 
         for (let prop in this) {

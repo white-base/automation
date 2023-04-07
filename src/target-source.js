@@ -83,7 +83,6 @@ class TargetSource {
      * @param {*} ori?  선택사항 
      */
     constructor(location, ori) {
-        
         let entry = this._batch._task.entry;
         let auto  = null;
 
@@ -106,16 +105,38 @@ class TargetSource {
      * @param {*} isRoot 절대경로시 location 경로 포함 여부 (install 시점)
      */
     setData(isRoot = true) {
-        
-        let ori, data, arrObj = [], list, change, refSrc, localDir;
-        let dir, entry;
-        let type, absolute, relative;
+        const pathInfo = this._batch.getPathInfo(this.location);
+        const _this = this;
+        let ori, data, arrObj = [], list, change, refSrc, type;
+
+        function getRelativePath(refSrc, tarSrc) {
+            // 1) 타겟소스가 없을 경우
+            if (refSrc._target === null || refSrc._target.fullPath === null) {
+                return path.relative(path.dirname(tarSrc.fullPath), refSrc.fullPath); // 상대경로 (오토기준)
+            // 2) 타겟소스가 있을 경우
+            } else {
+                return path.relative(path.dirname(tarSrc.fullPath), refSrc._target.fullPath);       
+            }
+        }
+
+        function getAbsolutePath(refSrc) {
+            const entry = _this._batch.entry;
+            let fullPath;
+
+            if (refSrc._target === null) fullPath = refSrc.fullPath;    // 타겟이 없는 경우
+            else fullPath = refSrc._target.fullPath;
+
+            if (pathInfo.root !== 0 && fullPath.indexOf(pathInfo.dir) < 0) { // 앤트리 하위 여부 검사
+                throw new Error(' 절대경로를 사용할려면 앤트리 오토의 하위에 있어야 합니다. fail...' + refSrc.fullPath);
+            }
+
+            if (pathInfo.root === 0) return fullPath;
+            else return path.sep + path.relative(pathInfo.dir, fullPath);
+        }
 
         ori = this._original;
         data = ori.data;
         arrObj = []; // 초기화
-        entry = this._batch._task.entry;
-
         
         for (let ii = 0; ii < ori._dep.length; ii++) {
 
@@ -123,52 +144,12 @@ class TargetSource {
             if (typeof ori._dep[ii].pos !== 'object') continue;
 
             refSrc = ori._dep[ii].ref;
-            // 1) 타겟소스가 없을 경우
-            if (refSrc._target === null || refSrc._target.fullPath === null) {
-                
-                dir = path.dirname(this.fullPath);  
-                relative = path.relative(dir, refSrc.fullPath); // 상대경로 (오토기준)
-
-                if (entry === refSrc._auto) {
-                    absolute = path.sep + refSrc.localPath;
-                } else {    // 하위의 경우
-                    if (this._batch.pathType !==2 && refSrc.dir.indexOf(entry.dir) < 0) { // 앤트리 하위 여부 검사
-                        throw new Error(' 절대경로를 사용할려면 하위오토는 앤트리 오토의 하위에 있어야 합니다. fail...');
-                    }
-                    localDir = path.relative(entry.dir, refSrc.dir);
-                    absolute = path.sep + localDir + path.sep + refSrc.localPath;
-                }
-            
-            // 2) 타겟소스가 있을 경우
-            } else {
-                
-                dir = path.dirname(this.fullPath);
-                relative = path.relative(dir, refSrc._target.fullPath);       
-               
-                if (entry === refSrc._auto) {   // 엔트리의 경우
-                    if (isRoot) absolute = path.sep + refSrc._target.localPath;     // root 기준 절대경로
-                    else absolute = path.sep + refSrc._target.subPath;              // location 기준 절대경로       
-                } else {                        // 엔트리 외(하위)의 경우
-                    // 앤트리 하위 여부 검사
-                    if (this._batch.pathType !==2 && refSrc._target.dir.indexOf(entry.dir) < 0) {
-                        throw new Error(' 절대경로를 사용할려면 하위오토는 앤트리 오토의 하위에 있어야 합니다. fail...');
-                    }
-                    localDir = path.relative(entry.dir, refSrc._target.dir);
-                    if (localDir.length > 0) {
-                        absolute = path.sep + localDir + path.sep + refSrc._target.localPath;    
-                    } else {    // 'install', 'depend' 의 경우
-                        if (isRoot) absolute = path.sep + refSrc._target.localPath;
-                        else absolute = path.sep + refSrc._target.subPath;
-                    }
-                }             
-            }
 
             for (let iii = 0; iii < ori._dep[ii].pos.length; iii++) {
                 list = ori._dep[ii].pos[iii];
                 
                 // 경로 설정
-                if (this._batch.pathType === 0 ) {
-                    // type = this.pathType === 0 ? list.type : this.pathType;
+                if (pathInfo.type === 0 ) {
                     if (this.referType === 0) {
                         if (ori._dep[ii].ref._target.refedType === 0) {
                             // pos 에서 파싱된 타입 설정
@@ -183,12 +164,11 @@ class TargetSource {
                     }
                 } else {
                     // 전체 경로 타입 설정
-                    type = this._batch.pathType;    
+                    type = pathInfo.type;    
                 }
                 
-                if (type === 1) change = absolute;
-                else change = relative; // 기본상대경로
-                // else if (type === 2) change = relative;
+                if (type === 1) change = getAbsolutePath(refSrc);
+                else change = getRelativePath(refSrc, this);
 
                 arrObj.push({
                     idx: list.idx,
@@ -207,7 +187,6 @@ class TargetSource {
      * @returns {this}
      */
     clone() {
-        
         let obj = new TargetSource(this.location, this._original);
         
         obj.isSave      = this.isSave;
@@ -232,7 +211,6 @@ class TargetSource {
      * fullPath, dir 속성을 설정한다.
      */
      #initPath() {
-
         let auto, src, useAuto, entry, alias, fullPath;
         let location;
         // const AutoTask = require('./auto-task');
@@ -275,7 +253,6 @@ class TargetSource {
      * @returns {*}
      */
     #setType(ori) {
-        
         let type = 0;
         
         if (ori instanceof VirtualFolder) this.type = 10;

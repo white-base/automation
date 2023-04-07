@@ -28,7 +28,6 @@ class InstallMap {
     /*_______________________________________*/      
     // property  
     get targets() {
-        
         let arr = [];
 
         for (let i = 0; i < this._child.length; i++) {
@@ -52,7 +51,6 @@ class InstallMap {
 
     // 객체 얻기
     getObject() {
-
         var obj = {};
         
         for (var prop in this) {
@@ -75,7 +73,6 @@ class InstallMap {
      * 인스톨맵 초기화 : _parent, _child 설정
      */
     init() {
-
         const auto = this._auto;
 
         if (auto._owner && auto._owner.install instanceof InstallMap) {
@@ -88,7 +85,6 @@ class InstallMap {
      * 인트롤맵 처리 : 세팅 >> 이름변경 >> 병합 >> 제외
      */
     execute() {
-        
         if (this._setup.length > 0) this.#execSetup();
         if (this._rename.length > 0) this.#execRename();
         if (this._merge.length > 0) this.#execMerge();
@@ -103,7 +99,6 @@ class InstallMap {
      * @param {JSON} json 
      */
     #load(json) {
-
         let obj;
 
         // setup obj
@@ -142,7 +137,6 @@ class InstallMap {
      * setup 실행
      */
     #execSetup() {
-
         let obj, tars = [], arr = [];
 
         for (let i = 0; i < this._setup.length; i++) {
@@ -176,7 +170,6 @@ class InstallMap {
      *  - 복수 경로 변경 (폴더)
      */
     #execRename() {
-        
         let arr = [], obj, tars = [];
         let entry = this._task.entry;
         const batch = this._task.batch;
@@ -252,7 +245,6 @@ class InstallMap {
      * 파일 머지는 특수한 경우이다. 타겟소스의 타입이 텍스트의 경우만 유효하다.
      */
     #execMerge() {
-
         let obj, arr = [], tars = [], newTar;
         const entry = this._task.entry;
         const batch = this._task.batch;
@@ -299,7 +291,6 @@ class InstallMap {
      * install 시 제외 파일 설정
      */
     #execExcept() {
-
         let str, tars = [], arr = [];
 
         for (let i = 0; i < this._except.length; i++) {

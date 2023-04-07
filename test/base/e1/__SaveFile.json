@@ -1,9 +1,8 @@
 [
-	"/Users/kimneo/PJ-Git/logic-auto/test/base/e1/dep/a1_1/inc/title.css",
-	"/Users/kimneo/PJ-Git/logic-auto/test/base/e1/dep/a1/default.css",
-	"/Users/kimneo/PJ-Git/logic-auto/test/base/m1_1/dist/m1.a1_1/inc/title.css",
-	"/Users/kimneo/PJ-Git/logic-auto/test/base/m1/dist/e1.a1/default.css",
-	"/Users/kimneo/PJ-Git/logic-auto/test/base/e1/dist/css/index.css",
-	"/Users/kimneo/PJ-Git/logic-auto/test/base/e1/dist/img.webp",
-	"/Users/kimneo/PJ-Git/logic-auto/test/base/e1/dist/index.htm"
+	"/Users/kimneo/PJ-Git/logic-auto/test/base/e1/install/m1_1/a1_1/inc/title.css",
+	"/Users/kimneo/PJ-Git/logic-auto/test/base/e1/install/m1/a1/default.css",
+	"/Users/kimneo/PJ-Git/logic-auto/test/base/e1/install/e1/css/index.css",
+	"/Users/kimneo/PJ-Git/logic-auto/test/base/e1/install/e1/img.webp",
+	"/Users/kimneo/PJ-Git/logic-auto/test/base/e1/install/e1/index.htm",
+	"/Users/kimneo/PJ-Git/logic-auto/test/base/e1/install/e1/css/core.css"
 ]

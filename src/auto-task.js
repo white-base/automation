@@ -115,13 +115,12 @@ class AutoTask {
      */
     do_dist() {
         this.cursor = 'DIST';
-        
         // 로딩
         // this._load();
-
         // 대상 오토 조회
         let list = this.entry._getAllList(true);
 
+        
         for (let i = 0; i < list.length; i++) {
             list[i].readSource(true, false);
         }
@@ -132,8 +131,6 @@ class AutoTask {
             list[i].resolver.resolve();
             this.batch.addCollection(list[i].src, this.entry.LOC.DIS, true);
         }
-// console.log('do_dist');
-
         // 저장
         this.batch.pathType = 2;     // 기본절대경로
         this.batch.save();
@@ -187,49 +184,7 @@ class AutoTask {
         this.batch.pathType = 2;         // 기본 상대경로
         this.batch.save();            
     }
-    // do_depend() { 
-    //     this.cursor = 'DEPEND';
-
-    //     // 로딩
-    //     // this._load();
-
-    //     /**
-    //      * TODO:: 대상 오토의 1차 의존성의 구조까지 로딩해야함
-    //      * 확인필요 !!
-    //      */
-    //     let all = this.entry._getAllList();    // 엔트리는 제외
-    //     let dep = this.entry._getDependList();
-
-    //     /**
-    //      * - 구조만 불러와도 배치는 할 수 있다.
-    //      */
-
-    //     // 이부분은 정의 역활을 한다.
-    //     for (let i = 0; i < all.length; i++) {
-    //         all[i].readSource(true, false);
-    //     }
-
-    //     // 의존성 로딩 및 설정
-    //     for (let i = 0; i < all.length; i++) {
-    //         all[i].resolver.read();
-    //         all[i].resolver.resolve();
-            
-    //         // 기타 모듈
-    //         if (dep.indexOf(all[i]) < 0) {
-    //             this.batch.addCollection(all[i].src, this.entry.LOC.DIS);
-            
-    //         // 의존성 모듈
-    //         } else {
-    //             this.batch.addCollection(all[i].src, this.entry.LOC.DEP);
-    //         }
-    //     }
-    //     // 저장
-    //     // this.batch.isRoot = true;        // 절대경로시 entry 폴더 기준
-    //     this.batch.pathType = 1;      // 기본상대경로
-    //     // this.batch.pathType = 2;         // 기본절대경로
-    //     this.batch.save();            
-    // }
-
+    
     /**
      * install 태스크 실행
      */
@@ -255,7 +210,7 @@ class AutoTask {
         }
 
         // 저장
-        this.batch.isRoot = false;       // 절대경로시 'install' 폴더
+        // this.batch.isRoot = false;       // 절대경로시 'install' 폴더
         // this.batch.pathType = 1;      // 전체절대경로
         // this.batch.pathType = 2;         // 기본절대경로
         this.batch.save();
@@ -339,7 +294,6 @@ class AutoTask {
      * 리셋 태스크 실행 (파일 및 폴더 삭제, 객체 초기화)
      */
     do_clear() {
-        
         let dir, entry, delPath;
 
         this.cursor = 'RESET';
@@ -377,26 +331,6 @@ class AutoTask {
     /**
      * 앤트리 오토 조회 및 적재
      */
-    // _load() {        
-    //     if (this.isLog) console.log('_load()....');
-
-    //     // 현재 폴더의 auto.js 파일 로딩
-    //     const entryFile = path.join(this.#dir, 'auto.js');
-    //     // 다양한 조건에 예외조건을 수용해야함
-    //     delete require.cache[require.resolve(entryFile)]
-    //     const EntryAuto = require(entryFile);
-    //     // 타입 검사해야함
-    //     // this.entry = new EntryAuto();
-    //     this.entry = typeof EntryAuto === 'function' ? new EntryAuto() : new EntryAuto.Automation();
-
-    //     // 초기화 
-    //     this.entry.init();
-
-    //     this.batch._batchFile = this.entry._file;
-        
-    //     // 이벤트 발생
-    //     this._onLoad();
-    // }
     _load() {        
         if (this.isLog) console.log('_load()....');
 
@@ -417,7 +351,6 @@ class AutoTask {
         this._onLoad();
     }
 
-
     /*_______________________________________*/
     // event call
 
@@ -437,4 +370,3 @@ class AutoTask {
 }
 
 exports.AutoTask = AutoTask;
-// module.exports = AutoTask;

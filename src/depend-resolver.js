@@ -53,7 +53,6 @@ class DependResolver {
      * 의존성 처리
      */
     resolve() {
-        
         let arr, OriginalPath, data, keyword;
         let list = [];
         const entry = this._task.entry;
@@ -93,7 +92,6 @@ class DependResolver {
      * 의존성 정보 저장 : __Relation.json
      */
     saveRelation() {
-
         const entry = this._task.entry;
         const saveName = this._task.FILE.RELATION;
         let obj = {};
@@ -158,7 +156,6 @@ class DependResolver {
      * @returns {array<string>}
      */
     getPattern(localPath) {
-        
         let target = [], include = [], exclude =[];
         let arr = [], list;
 
@@ -193,7 +190,6 @@ class DependResolver {
      * @returns {array<string>}}
      */
     getPatternObj(localPath) { 
-        
         let arr = [];
         let pattern = this.getPattern(localPath);
 
@@ -214,7 +210,6 @@ class DependResolver {
      * @returns {array}
      */
     _getPaths(isObj) {
-        
         let arr = [];
 
         for (let i = 0; i < this._paths.length; i++) {
@@ -228,7 +223,6 @@ class DependResolver {
      * @returns {array}
      */
      _getList(isObj) {
-        
         let arr = [];
 
         for (let i = 0; i < this._list.length; i++) {
@@ -278,9 +272,7 @@ class DependResolver {
      * 참조대상 읽기
      */
     _readReference() {
-
         let alias = '';
-
         function createObject(OriginalPath, location, alias = '') {
             let objPath = {
                 path: OriginalPath.localPath,
@@ -320,7 +312,6 @@ class DependResolver {
      * @param {JSON} json 
      */
     #load(json) {
-     
         let obj;
 
         if (json && Array.isArray(json.pattern)) {
@@ -337,13 +328,10 @@ class DependResolver {
      * @returns {array}
      */
     #getPathList(obj) {
-        // 
         let arr = [];
         let relativePath = null;
         let OriginalPath, dir, localPath, aliasPath;
         let paths = [];
-
-        // 내부함수 
         function createPathList(OriginalPath, ...paths) {
             let key = {
                 OriginalPath: OriginalPath,
@@ -351,48 +339,8 @@ class DependResolver {
             };
             return key;
         }
-
         paths = this.getPatternObj(obj.path);
 
-        /**
-         * src 참조위치 : src, out, dep
-         * out 참조위치 : out (자신만 참조) <= 너무 폐쇠적인 구조임
-         */
-        // if (obj.location === 'src') {
-        //     for (let i = 0; i < paths.length; i++) {
-        //         OriginalPath = paths[i].origin;
-        //         if (['src', 'out'].indexOf(paths[i].location) > -1) {
-        //             // 절대경로 
-        //             localPath = path.sep + OriginalPath.localPath;
-        //             dir = path.dirname(obj.origin.fullPath);
-        //             // 상대경로 
-        //             relativePath = path.relative(dir, OriginalPath.fullPath);
-        //             // arr.push(createPathList(OriginalPath, localPath, relativePath));
-        //             arr.push(createPathList(OriginalPath, { type: 1, info: localPath }, { type: 2, info: relativePath }));
-        //         } else if (paths[i].location === 'dep') {
-        //             // 절대경로  (가상경로)
-        //             aliasPath = path.sep + this._auto.LOC.DEP + path.sep + paths[i].alias + path.sep + OriginalPath.subPath;
-        //             dir = path.dirname(obj.origin.fullPath);
-        //             // 상대경로 
-        //             relativePath = path.relative(dir, this._auto.dir + path.sep + aliasPath);
-        //             // arr.push(createPathList(OriginalPath, aliasPath, relativePath));
-        //             arr.push(createPathList(OriginalPath, { type: 1, info: aliasPath }, { type: 2, info: relativePath }));
-        //         }
-        //     }
-        // } else if (obj.location === 'out') {
-        //     for (let i = 0; i < paths.length; i++) {
-        //         OriginalPath = paths[i].origin;
-        //         if (['out'].indexOf(paths[i].location) > -1) {
-        //             // 절대경로 
-        //             localPath = path.sep + OriginalPath.localPath;
-        //             // 상대경로 
-        //             dir = path.dirname(obj.origin.fullPath);
-        //             relativePath = path.relative(dir, OriginalPath.fullPath);
-        //             // arr.push(createPathList(OriginalPath, localPath, relativePath));
-        //             arr.push(createPathList(OriginalPath, { type: 1, info: localPath }, { type: 2, info: relativePath }));
-        //         }
-        //     }
-        // }
         if (obj.location === 'src' || obj.location === 'out') {
             for (let i = 0; i < paths.length; i++) {
                 OriginalPath = paths[i].origin;
@@ -428,7 +376,6 @@ class DependResolver {
      * @returns {array}
      */
     #getMatch(strPath, data, type = null, filename) {
-        
         let reg
         let rArr = [];
         let index;
@@ -454,7 +401,6 @@ class DependResolver {
             column = arrLine[line - 1].length;
             // if (line > 0) column = arrLine[line - 1].length;
             // else column = index;
-
             rArr.push({
                 idx: index,
                 key: strPath,

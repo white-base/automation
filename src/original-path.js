@@ -122,7 +122,6 @@ class VirtualFolder extends OriginalPath {
         // 필수 검사 필요!!
         this.#fullPath = localPath;
     }
-
 }
 
 /**
@@ -238,7 +237,6 @@ class TextFile extends NonTextFile {
      * @param {*} opt 
      */
     addLocation(location, opt) {
-
         const _this = this;
         const sep = path.sep;
         const dirs = this._onwer.dirs;
@@ -290,7 +288,6 @@ class TextFile extends NonTextFile {
      * 파일 data 채우기
      */
     fillData() {
-        
         let filePath;
         
         for (let i = 0; i < this.list.length; i++) {
@@ -321,7 +318,6 @@ class TextFile extends NonTextFile {
      * @param {string} vFolder 
      */
     add(vFolder) {
-        
         let obj;
 
         obj = new VirtualFolder(this._onwer, vFolder, this._onwer.dir);
