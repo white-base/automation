@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const isBinaryPath = require('is-binary-path');
-const { MetaElement, PropertyCollection, MetaObject } = require('white-core');
+const { MetaElement, PropertyCollection, MetaObject } = require('logic-core');
 // const { MetaElement, PropertyCollection, MetaObject } = require('entitybind');
 
 /**

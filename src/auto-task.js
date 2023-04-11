@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { SourceBatch } = require('./source-batch');
-const { Observer } = require('white-core');
+const { Observer } = require('logic-core');
 // const { Observer } = require('entitybind');
 
 /**

@@ -1,5 +1,5 @@
 const { FileCollection, FolderCollection }          = require('./original-path');
-const { MetaElement, PropertyCollection, Observer } = require('white-core');
+const { MetaElement, PropertyCollection, Observer } = require('logic-core');
 const fs                    = require('fs');
 const path                  = require('path');
 const { DependResolver }    = require('./depend-resolver');
