@@ -264,7 +264,7 @@ class TextFile extends NonTextFile {
                         file = new TextFile(_this._onwer, path + sep + arr[i], location, baseDir);
                     }
                     
-                    idx = _this.indexOfName(alias);  // 중복이름 검사
+                    idx = _this.indexOfProp(alias);  // 중복이름 검사
                     if (idx > -1) _this[idx] = file;  // 내용 교체
                     else _this.add(alias, file);
                     
