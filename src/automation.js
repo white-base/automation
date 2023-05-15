@@ -733,7 +733,7 @@ class Automation {
         // 별칭 이름 등록
         this._sub.push(alias);
         // 의존성 등록
-        this._onwer.dep.add(alias, auto.src);
+        this._owner.dep.add(alias, auto.src);
     }
     
     /**
@@ -747,13 +747,13 @@ class Automation {
         // 별칭 이름 등록
         this._super.push(alias);
         // 의존성 등록
-        this._onwer.dep.add(alias, auto.src);
+        this._owner.dep.add(alias, auto.src);
 
         // 하위 가져오기
         const arrSuper = auto._getSuperList(false);    // 자신 제외
         for (let i = 0; i < arrSuper.length; i++) {
             const sup = arrSuper[i];
-            this._onwer.dep.add(sup.alias, sup.src);
+            this._owner.dep.add(sup.alias, sup.src);
         }
     }
 
@@ -778,7 +778,7 @@ class Automation {
      */
      _valid(alias, auto) {
         // 별칭 중복 검사
-        if (super.indexOfProp(alias) > -1) {
+        if (super.indexOf(alias, 1) > -1) {
             throw new Error(' 별칭 중복 오류!! ');
         }
         // static 검사

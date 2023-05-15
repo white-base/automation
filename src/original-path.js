@@ -239,7 +239,7 @@ class TextFile extends NonTextFile {
     addLocation(location, opt) {
         const _this = this;
         const sep = path.sep;
-        const dirs = this._onwer.dirs;
+        const dirs = this._owner.dirs;
         let dir = '', bDir = '';
 
         // 내부 함수
@@ -259,12 +259,12 @@ class TextFile extends NonTextFile {
                     // 컬렉션에 등록
                     alias = dir === '' ? arr[i] : dir + sep + arr[i];
                     if (isBinaryPath(path +'/'+ arr[i])) {
-                        file = new NonTextFile(_this._onwer, path + sep + arr[i], location, baseDir);
+                        file = new NonTextFile(_this._owner, path + sep + arr[i], location, baseDir);
                     } else {
-                        file = new TextFile(_this._onwer, path + sep + arr[i], location, baseDir);
+                        file = new TextFile(_this._owner, path + sep + arr[i], location, baseDir);
                     }
                     
-                    idx = _this.indexOfProp(alias);  // 중복이름 검사
+                    idx = _this.indexOf(alias, 1);  // 중복이름 검사
                     if (idx > -1) _this[idx] = file;  // 내용 교체
                     else _this.add(alias, file);
                     
@@ -320,7 +320,7 @@ class TextFile extends NonTextFile {
     add(vFolder) {
         let obj;
 
-        obj = new VirtualFolder(this._onwer, vFolder, this._onwer.dir);
+        obj = new VirtualFolder(this._owner, vFolder, this._owner.dir);
         super.add(vFolder, obj);
     }
 }
